@@ -13,7 +13,7 @@ Then it distributes your **total** provided LKMEX for all NFTs holders. The more
 
 Right now LKMEX is divided evenly by all addresses. For instance, if the wallet address holds 10 NFTS, he will get **10 transactions** with an equal LKMEX amount.
 
-The gas fee is **cheap** indeed, but it is the most important priority right now to stack the LKMEX and send only a **single transaction per wallet* 🧐.
+The gas fee is **cheap** indeed, but it is the most important priority right now to stack the LKMEX and send only a **single transaction per wallet** 🧐.
 
 #### Getting started
 
@@ -29,7 +29,7 @@ After that run
 **pip install -r requirements.txt**
 
 ##### 2. Provide the wallet.pem file
-You need to generate a wallet.pem file from your secret seed phrase. You can read [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/) (**read the warning**).
+You need to generate a wallet.pem file from your secret seed phrase. You can read [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/) (**check the warning**).
 
 ##### 3. Modifying the constants
 
