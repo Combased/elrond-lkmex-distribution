@@ -8,7 +8,6 @@ from dominate.tags import *
 
 import requests
 
-# TODO: Add more marketplaces
 EMOON_ADDRESS = "erd1w9mmxz6533m7cf08gehs8phkun2x4e8689ecfk3makk3dgzsgurszhsxk4"
 DEAD_RARE_ADDRESS = "erd1qqqqqqqqqqqqqpgqd9rvv2n378e27jcts8vfwynpx0gfl5ufz6hqhfy0u0"
 TRUST_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq6wegs2xkypfpync8mn2sa5cmpqjlvrhwz5nqgepyg8"
@@ -44,7 +43,6 @@ def get_addresses_for_distro(args: Any) -> str:
     func_html = open("output/unique-{}".format(html_file), "w")
     func_txt = open("output/total-{}".format(txt_file), "w")
 
-    func_html.write(str(doc))
     addresses_return_to_sh = ""
     unique_addresses_list = []
     count = 0
@@ -73,9 +71,9 @@ def get_addresses_for_distro(args: Any) -> str:
                 # li(a(i.title(), href='/%s.html' % i))
     with doc:
         h1('%s distribution for %s' % (token, nft_collection_address))
-        h3('Total addresses: %s' % count)
-        h3('Unique addresses: %s' % len(unique_addresses_list))
-        h2('Addresses & their transactions:')
+        h4('Total addresses: %s' % count)
+        h4('Unique addresses: %s' % len(unique_addresses_list))
+        h2('Addresses:')
         ul()
         for unique_address in unique_addresses_list:
             explorer_url = f"https://{proxy_prefix}-explorer.elrond.com/accounts/{unique_address}"
@@ -87,9 +85,10 @@ def get_addresses_for_distro(args: Any) -> str:
 
     # calculating token amount to distribute to each wallet address
     token = hex_encode_string(token)
+    token_dec = int(args["token_decimals"])
     token_total = int(args["token_total"])
     token_per_address = int(token_total / count)
-    per_wallet = int(token_per_address * (10 ** 18))
+    per_wallet = int(token_per_address * (10 ** token_dec))
     quantity_in_hex = hex(per_wallet)
     # attaching to returned string as first argument
     addresses_return_to_sh = quantity_in_hex + " " + token + " " + addresses_return_to_sh
@@ -167,6 +166,7 @@ parser.add_argument('sc_address', type=str, help='Smart contract wallet address'
 parser.add_argument('owner_address', type=str, help='Owner wallet address')
 parser.add_argument("token", type=str, help="Token identifier")
 parser.add_argument("token_nonce", type=str, help="Token nonce identifier")
+parser.add_argument("token_decimals", type=str, help="Token decimals")
 parser.add_argument('token_total', type=str, help='Total token value in decimal, natural numbers only')
 parser.add_argument('proxy_prefix', type=str, help='Proxy prefix for urls')
 cli_args = parser.parse_args()
@@ -175,6 +175,7 @@ tx_args = {"collection": cli_args.collection,
            "owner_address": cli_args.owner_address,
            "token": cli_args.token,
            "token_nonce": cli_args.token_nonce,
+           "token_decimals": cli_args.token_decimals,
            "token_total": cli_args.token_total,
            "proxy_prefix": cli_args.proxy_prefix}
 tx_data = prepare_args(tx_args)

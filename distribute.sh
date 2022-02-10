@@ -10,8 +10,10 @@ NFT_COLLECTION_IDENTIFIER=SHIRE-e6ab2d
 SMART_CONTRACT_ADDRESS=null
 # The collection identifier of the tokens that will be distributed. Check the collection row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef
 TOKEN_COLLECTION_IDENTIFIER_IN_HEX=LEMBAS-b25809
-# Found in Elrond Explorer. Check the identifier row and extract the nonce. As an example: LKMEX-aab910-22e4ef has a nonce of 22e4ef 
+# Check the identifier row and extract the nonce. As an example: LKMEX-aab910-22e4ef has the nonce 22e4ef 
 TOKEN_NONCE=01
+# The amount of decimals of the token. Check the decimals row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef
+TOKEN_DECIMALS=18
 # The total amount to will be divided and distributed to all NFTs owners.
 TOKEN_TOTAL=500
 # Select `mainnet`, `testnet` or `devnet`
@@ -36,7 +38,7 @@ fi
 
 OWNER_ADDRESS=$(erdpy wallet pem-address $OWNER_WALLET)
 set -ex
-DATA=$($PYTHON_BINARY ./prepare-args.py get-addresses $NFT_COLLECTION_IDENTIFIER $SMART_CONTRACT_ADDRESS $OWNER_ADDRESS $TOKEN_COLLECTION_IDENTIFIER_IN_HEX $TOKEN_NONCE $TOKEN_TOTAL $PROXY_PREFIX)
+DATA=$($PYTHON_BINARY ./prepare-args.py get-addresses $NFT_COLLECTION_IDENTIFIER $SMART_CONTRACT_ADDRESS $OWNER_ADDRESS $TOKEN_COLLECTION_IDENTIFIER_IN_HEX $TOKEN_NONCE $TOKEN_DECIMALS $TOKEN_TOTAL $PROXY_PREFIX)
 set -f
 all_addresses=($(echo "$DATA" | tr ' ' '\n'))
 
