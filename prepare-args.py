@@ -3,28 +3,34 @@
 import argparse
 from datetime import date
 from typing import Any, List, Union
+import dominate
+from dominate.tags import *
 
 import requests
 
+# TODO: Add more marketplaces
 EMOON_ADDRESS = "erd1w9mmxz6533m7cf08gehs8phkun2x4e8689ecfk3makk3dgzsgurszhsxk4"
 DEAD_RARE_ADDRESS = "erd1qqqqqqqqqqqqqpgqd9rvv2n378e27jcts8vfwynpx0gfl5ufz6hqhfy0u0"
 TRUST_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq6wegs2xkypfpync8mn2sa5cmpqjlvrhwz5nqgepyg8"
 
 
-def get_addresses_for_lkmex(args: Any) -> str:
+def get_addresses_for_distro(args: Any) -> str:
     '''
-    Gets addresses to send LKMEX
+    Gets addresses to send tokens to.
     :param args: Contains a collection identifier, owner address and smart-contract address
     :return: A string with empty spaces to form an array in sh script
     '''
 
     nft_collection_address = args["collection"]
     sc_address = args["sc_address"]
+    token = args["token"]
+    proxy_prefix = args["proxy_prefix"]
 
-    r = requests.get('https://api.elrond.com/nfts/{}/owners/?size=10000'.format(nft_collection_address))
+    api_url = f"https://{proxy_prefix}-api.elrond.com/nfts/{nft_collection_address}/owners/?size=10000"
+    r = requests.get(api_url)
     values = r.json()
 
-    # creating a black listed array so that these addresses won't get a LKMEX
+    # creating a black listed array so that these addresses won't get the token
     black_listed_addresses = [EMOON_ADDRESS,
                               DEAD_RARE_ADDRESS,
                               TRUST_WALLET_ADDRESS,
@@ -38,9 +44,7 @@ def get_addresses_for_lkmex(args: Any) -> str:
     func_html = open("output/unique-{}".format(html_file), "w")
     func_txt = open("output/total-{}".format(txt_file), "w")
 
-    func_html.write("<html>\n<head>\n<title> \nLKMEX Distribution \
-               </title>\n</head> <body><h1>All addresses</u></h1>\
-               ")
+    func_html.write(str(doc))
     addresses_return_to_sh = ""
     unique_addresses_list = []
     count = 0
@@ -57,22 +61,38 @@ def get_addresses_for_lkmex(args: Any) -> str:
                 unique_addresses_list.append(address)
 
     # forming HTML file
-    for unique_address in unique_addresses_list:
-        func_html.write(
-            "\n<a href='https://explorer.elrond.com/accounts/{}'>{}\n</a>".format(unique_address, unique_address))
-        func_html.write("</br>")
-
-    func_html.write("\n</body></html>")
+    doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_address))
+    # TODO: add ability to add your website stuff below
+    # with doc.head:
+        # link(rel='stylesheet', href='/style.css')
+        # script(type='text/javascript', src='/script.js')
+    # TODO: add your website stuff and important links here
+    # with doc:
+        # with div(id='header').add(ol()):
+            # for i in ['link-1', 'link-2', 'link-3']:
+                # li(a(i.title(), href='/%s.html' % i))
+    with doc:
+        h1('%s distribution for %s' % (token, nft_collection_address))
+        h3('Total addresses: %s' % count)
+        h3('Unique addresses: %s' % len(unique_addresses_list))
+        h2('Addresses & their transactions:')
+        ul()
+        for unique_address in unique_addresses_list:
+            explorer_url = f"https://{proxy_prefix}-explorer.elrond.com/accounts/{unique_address}"
+            li(a(unique_address, href=explorer_url))
+    func_html.write(str(doc))
     func_html.close()
     func_txt.write("Total count is " + str(count) + "\n")
     func_txt.close()
 
-    # calculating LKMEX amount to distribute to each wallet address
-    lkmex_total = int(args["lkmex_total"])
-    per_wallet = int((lkmex_total / count * 10 ** 18))
+    # calculating token amount to distribute to each wallet address
+    token = hex_encode_string(token)
+    token_total = int(args["token_total"])
+    token_per_address = int(token_total / count)
+    per_wallet = int(token_per_address * (10 ** 18))
     quantity_in_hex = hex(per_wallet)
     # attaching to returned string as first argument
-    addresses_return_to_sh = quantity_in_hex + " " + addresses_return_to_sh
+    addresses_return_to_sh = quantity_in_hex + " " + token + " " + addresses_return_to_sh
     print(addresses_return_to_sh)
     return addresses_return_to_sh
 
@@ -136,7 +156,7 @@ def hex_encode(arg: Union[str, int]) -> str:
 
 
 def prepare_args(args: Any) -> str:
-    return get_addresses_for_lkmex(args)
+    return get_addresses_for_distro(args)
 
 
 parser = argparse.ArgumentParser(description='Prepare the data field for a given command from a JSON.')
@@ -145,12 +165,16 @@ parser.add_argument('command', help='Command to prepare', nargs='?',
 parser.add_argument('collection', type=str, help='Collection identifier')
 parser.add_argument('sc_address', type=str, help='Smart contract wallet address', default=None)
 parser.add_argument('owner_address', type=str, help='Owner wallet address')
-parser.add_argument("lkmex_nonce", type=str, help="LKMEX nonce identifier")
-parser.add_argument('lkmex_total', type=str, help='Total LKMEX value in decimal, natural numbers only')
+parser.add_argument("token", type=str, help="Token identifier")
+parser.add_argument("token_nonce", type=str, help="Token nonce identifier")
+parser.add_argument('token_total', type=str, help='Total token value in decimal, natural numbers only')
+parser.add_argument('proxy_prefix', type=str, help='Proxy prefix for urls')
 cli_args = parser.parse_args()
 tx_args = {"collection": cli_args.collection,
            "sc_address": cli_args.sc_address,
            "owner_address": cli_args.owner_address,
-           "lkmex_nonce": cli_args.lkmex_nonce,
-           "lkmex_total": cli_args.lkmex_total}
+           "token": cli_args.token,
+           "token_nonce": cli_args.token_nonce,
+           "token_total": cli_args.token_total,
+           "proxy_prefix": cli_args.proxy_prefix}
 tx_data = prepare_args(tx_args)
