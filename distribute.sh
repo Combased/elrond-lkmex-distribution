@@ -14,7 +14,7 @@ TOKEN_COLLECTION_IDENTIFIER_IN_HEX=LEMBAS-b25809
 TOKEN_NONCE=01
 # The amount of decimals of the token. Check the decimals row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef
 TOKEN_DECIMALS=18
-# The total amount to will be divided and distributed to all NFTs owners.
+# The total amount which will be divided and distributed to all NFTs owners.
 TOKEN_TOTAL=500
 # Select `mainnet`, `testnet` or `devnet`
 PROXY="devnet"
