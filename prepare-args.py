@@ -25,7 +25,7 @@ def get_addresses_for_distro(args: Any) -> str:
     token = args["token"]
     proxy_prefix = args["proxy_prefix"]
 
-    api_url = f"https://{proxy_prefix}-api.elrond.com/nfts/{nft_collection_address}/owners/?size=10000"
+    api_url = f"https://{proxy_prefix}api.elrond.com/nfts/{nft_collection_address}/owners/?size=10000"
     r = requests.get(api_url)
     values = r.json()
 
@@ -76,7 +76,7 @@ def get_addresses_for_distro(args: Any) -> str:
         h2('Addresses:')
         ul()
         for unique_address in unique_addresses_list:
-            explorer_url = f"https://{proxy_prefix}-explorer.elrond.com/accounts/{unique_address}"
+            explorer_url = f"https://{proxy_prefix}explorer.elrond.com/accounts/{unique_address}"
             li(a(unique_address, href=explorer_url))
     func_html.write(str(doc))
     func_html.close()
@@ -177,5 +177,5 @@ tx_args = {"collection": cli_args.collection,
            "token_nonce": cli_args.token_nonce,
            "token_decimals": cli_args.token_decimals,
            "token_total": cli_args.token_total,
-           "proxy_prefix": cli_args.proxy_prefix}
+           "proxy_prefix": cli_args.proxy_prefix.strip()}
 tx_data = prepare_args(tx_args)

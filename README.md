@@ -1,13 +1,13 @@
 ### elrond-lkmex-distribution
 
-**The script for distributing LKMEX to all Your NFTs collection holders 😎!**
+**The script for distributing LKMEX (or any other [ESDT](https://docs.elrond.com/developers/esdt-tokens/) token!) to all Your NFTs collection holders 😎!**
 
 Inspired by the [Elrond script utils](https://github.com/ElrondNetwork/script-utils) (we'll unify our scripts in near future).
 
 #### How it works
 The script gets the addresses from all collection holders, it excludes **marketplaces** and the owner address/SC address.
 
-Then it distributes your **total** provided LKMEX for all NFTs holders. The more NFTs the wallet address has - the more LKMEX it gets 🤑.
+Then it distributes your **total** provided LKMEX (ESDT token) for all NFTs holders. The more NFTs the wallet address has - the more LKMEX it gets 🤑.
 
 #### Known limitations & improvements
 
@@ -40,10 +40,16 @@ You need to modify the following constants:
 NFT_COLLECTION_IDENTIFIER=Your collection identifier
 # Null if Smart Contract does not hold NFTs for distribution. Provide an address if it holds.
 SMART_CONTRACT_ADDRESS=null
-# Found in Elrond Explorer. Check the identifier row and extract the nonce https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef
-LKMEX_NONCE=22e4ef
-# The total amount to distribute to the NFTs owners
-LKMEX_TOTAL=Your total amount
+# The collection identifier of the tokens that will be distributed. Check the collection row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef
+TOKEN_COLLECTION_IDENTIFIER_IN_HEX=LKMEX-aab910
+# Check the identifier row and extract the nonce. As an example: LKMEX-aab910-22e4ef has the nonce 22e4ef 
+TOKEN_NONCE=22e4ef
+# The amount of decimals of the token. Check the decimals row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef For LKMEX it is 18
+TOKEN_DECIMALS=18
+# The total amount which will be divided and distributed to all NFTs owners.
+TOKEN_TOTAL=500000
+# Select `mainnet`, `testnet` or `devnet`
+PROXY="mainnet"
 ```
 ##### 4. Run the script!
 Congrats, open the terminal and run **./distribute.sh**. Check the **output** folder for information, which can be displayed in the Discord or your website 🥳! 
