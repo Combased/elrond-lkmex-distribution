@@ -22,11 +22,23 @@ You need to interact only with the **distribute.sh** file.
 To make this distribution work for your NFTs collection you can configure it like this:
 
 ##### 1. Configuring Python
-You need to have Python installed on your machine or in the virtual environment 🤓. 
+You need to have Python installed on your machine or in the virtual environment 🤓.
+
+Check your Python version by running:
+
+```shell
+$ python3 --version
+```
+
+Then you should modify the **distribute.sh** script to match your Python version: 
+
+**PYTHON_BINARY=python3.8**
 
 After that run
 
-**pip install -r requirements.txt**
+```shell
+$ pip install -r requirements.txt
+```
 
 ##### 2. Provide the wallet.pem file
 You need to generate a wallet.pem file from your secret seed phrase. You can read [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/) (**check the warning**).
@@ -41,7 +53,7 @@ NFT_COLLECTION_IDENTIFIER=Your collection identifier
 # Null if Smart Contract does not hold NFTs for distribution. Provide an address if it holds.
 SMART_CONTRACT_ADDRESS=null
 # The collection identifier of the tokens that will be distributed. Check the collection row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef
-TOKEN_COLLECTION_IDENTIFIER_IN_HEX=LKMEX-aab910
+TOKEN_COLLECTION_IDENTIFIER=LKMEX-aab910
 # Check the identifier row and extract the nonce. As an example: LKMEX-aab910-22e4ef has the nonce 22e4ef 
 TOKEN_NONCE=22e4ef
 # The amount of decimals of the token. Check the decimals row in the example: https://explorer.elrond.com/nfts/LKMEX-aab910-22e4ef For LKMEX it is 18

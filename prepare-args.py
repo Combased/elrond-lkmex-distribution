@@ -69,10 +69,13 @@ def get_addresses_for_distro(args: Any) -> str:
         # with div(id='header').add(ol()):
             # for i in ['link-1', 'link-2', 'link-3']:
                 # li(a(i.title(), href='/%s.html' % i))
+    token_total = int(args["token_total"])
+    token_per_address = int(token_total / count)
     with doc:
         h1('%s distribution for %s' % (token, nft_collection_address))
         h4('Total addresses: %s' % count)
         h4('Unique addresses: %s' % len(unique_addresses_list))
+        h4('Token value per address: %s' % token_per_address)
         h2('Addresses:')
         ul()
         for unique_address in unique_addresses_list:
@@ -86,8 +89,6 @@ def get_addresses_for_distro(args: Any) -> str:
     # calculating token amount to distribute to each wallet address
     token = hex_encode_string(token)
     token_dec = int(args["token_decimals"])
-    token_total = int(args["token_total"])
-    token_per_address = int(token_total / count)
     per_wallet = int(token_per_address * (10 ** token_dec))
     quantity_in_hex = hex(per_wallet)
     # attaching to returned string as first argument
