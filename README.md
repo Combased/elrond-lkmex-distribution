@@ -14,6 +14,8 @@
   * [How it works](#how-it-works)
   * [Known limitations & improvements](#known-limitations--improvements)
   * [Getting started](#getting-started)
+  
+
 ## NFTs holder report
 Now you can generate a CSV report, which shows your NFTs holders and the displays a column of how many NFTS **are in the wallet** for **specified days** 😎.
 
