@@ -2,6 +2,7 @@
 
 import argparse
 from datetime import date
+from pathlib import Path
 from typing import Any, List, Union
 import dominate
 from dominate.tags import *
@@ -20,12 +21,15 @@ def get_addresses_for_distro(args: Any) -> str:
     :return: A string with empty spaces to form an array in sh script
     '''
 
-    nft_collection_address = args["collection"]
+    p = Path('output')
+    p.mkdir(parents=True, exist_ok=True)
+
+    nft_collection_name = args["collection"]
     sc_address = args["sc_address"]
     token = args["token"]
     proxy_prefix = args["proxy_prefix"]
 
-    api_url = f"https://{proxy_prefix}api.elrond.com/nfts/{nft_collection_address}/owners/?size=10000"
+    api_url = f"https://{proxy_prefix}api.elrond.com/nfts/{nft_collection_name}/owners/?size=10000"
     r = requests.get(api_url)
     values = r.json()
 
@@ -59,7 +63,7 @@ def get_addresses_for_distro(args: Any) -> str:
                 unique_addresses_list.append(address)
 
     # forming HTML file
-    doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_address))
+    doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_name))
     # TODO: add ability to add your website stuff below
     # with doc.head:
         # link(rel='stylesheet', href='/style.css')
@@ -72,7 +76,7 @@ def get_addresses_for_distro(args: Any) -> str:
     token_total = int(args["token_total"])
     token_per_address = int(token_total / count)
     with doc:
-        h1('%s distribution for %s' % (token, nft_collection_address))
+        h1('%s distribution for %s' % (token, nft_collection_name))
         h4('Total addresses: %s' % count)
         h4('Unique addresses: %s' % len(unique_addresses_list))
         h4('Token value per address: %s' % token_per_address)
@@ -161,8 +165,8 @@ def prepare_args(args: Any) -> str:
 
 parser = argparse.ArgumentParser(description='Prepare the data field for a given command from a JSON.')
 parser.add_argument('command', help='Command to prepare', nargs='?',
-                    choices=('get-addresses', 'hex_encode'))
-parser.add_argument('collection', type=str, help='Collection identifier')
+                    choices=('get-addresses', 'hex_encode', 'get_duration_of_holding'))
+parser.add_argument('collection', type=str, help='NFT collection name')
 parser.add_argument('sc_address', type=str, help='Smart contract wallet address', default=None)
 parser.add_argument('owner_address', type=str, help='Owner wallet address')
 parser.add_argument("token", type=str, help="Token identifier")
