@@ -182,5 +182,5 @@ tx_args = {"collection": cli_args.collection,
            "token_nonce": cli_args.token_nonce,
            "token_decimals": cli_args.token_decimals,
            "token_total": cli_args.token_total,
-           "proxy_prefix": cli_args.proxy_prefix.strip()}
+           "proxy_prefix": cli_args.proxy_prefix.replace("&", "")}
 tx_data = prepare_args(tx_args)

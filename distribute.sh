@@ -23,7 +23,7 @@ PROXY="mainnet"
 # See https://docs.elrond.com/sdk-and-tools/erdpy/configuring-erdpy/
 # if proxy is mainnet, testnet or devnet, set proxy and chainId to different values
 if [ "$PROXY" = "mainnet" ]; then
-    PROXY_PREFIX=" "
+    PROXY_PREFIX="&"
     PROXY="https://gateway.elrond.com"
     CHAIN="1"
 elif [ "$PROXY" = "testnet" ]; then
@@ -45,7 +45,7 @@ all_addresses=($(echo "$DATA" | tr ' ' '\n'))
 quantity_in_hex=${all_addresses[1]}
 token_in_hex="0x${all_addresses[2]}"
 token_nonce_in_hex="0x$TOKEN_NONCE"
-for address in "${all_addresses[@]:2}"
+for address in "${all_addresses[@]:3}"
 do
    destination_address=`erdpy wallet bech32 --decode $address| sed 's/^.*= //'`
    destination_address="0x$destination_address"
