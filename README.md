@@ -79,12 +79,6 @@ The script gets the addresses from all collection holders, it excludes **marketp
 
 Then it distributes your **total** provided LKMEX (ESDT token) for all NFTs holders. The more NFTs the wallet address has - the more LKMEX it gets 🤑.
 
-#### Known limitations & improvements
-
-Right now LKMEX is divided evenly by all addresses. For instance, if the wallet address holds 10 NFTS, he will get **10 transactions** with an equal LKMEX amount.
-
-The gas fee is **cheap** indeed, but it is the most important priority right now to stack the LKMEX and send only a **single transaction per wallet** 🧐.
-
 #### Getting started
 
 You need to interact only with the **distribute.sh** file.
