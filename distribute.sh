@@ -41,14 +41,15 @@ set -ex
 DATA=$($PYTHON_BINARY ./prepare-args.py get-addresses $NFT_COLLECTION_IDENTIFIER $SMART_CONTRACT_ADDRESS $OWNER_ADDRESS $TOKEN_COLLECTION_IDENTIFIER $TOKEN_NONCE $TOKEN_DECIMALS $TOKEN_TOTAL $PROXY_PREFIX)
 set -f
 all_addresses=($(echo "$DATA" | tr ' ' '\n'))
-
 quantity_in_hex=${all_addresses[1]}
 token_in_hex="0x${all_addresses[2]}"
 token_nonce_in_hex="0x$TOKEN_NONCE"
-for address in "${all_addresses[@]:3}"
+
+while IFS="," read -r address_column esdt_value_colum random
 do
-   destination_address=`erdpy wallet bech32 --decode $address| sed 's/^.*= //'`
-   destination_address="0x$destination_address"
-   erdpy contract call $OWNER_ADDRESS --function ESDTNFTTransfer --arguments $token_in_hex $token_nonce_in_hex $quantity_in_hex $destination_address --proxy $PROXY --recall-nonce --gas-limit $GAS_LIMIT --chain $CHAIN --pem wallet.pem --send
-   sleep 20
-done
+  echo $address_column
+  destination_address=`erdpy wallet bech32 --decode $address_column| sed 's/^.*= //'`
+  destination_address="0x$destination_address"
+  erdpy contract call $OWNER_ADDRESS --function ESDTNFTTransfer --arguments $token_in_hex $token_nonce_in_hex "${esdt_value_colum}" $destination_address --proxy $PROXY --recall-nonce --gas-limit $GAS_LIMIT --chain $CHAIN --pem wallet.pem --send
+  sleep 20
+done < <(tail -n +2 "output/${NFT_COLLECTION_IDENTIFIER}-esdt-per-address.csv")

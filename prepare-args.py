@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import csv
 from datetime import date
 from pathlib import Path
 from typing import Any, List, Union
@@ -12,6 +13,15 @@ import requests
 EMOON_ADDRESS = "erd1w9mmxz6533m7cf08gehs8phkun2x4e8689ecfk3makk3dgzsgurszhsxk4"
 DEAD_RARE_ADDRESS = "erd1qqqqqqqqqqqqqpgqd9rvv2n378e27jcts8vfwynpx0gfl5ufz6hqhfy0u0"
 TRUST_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq6wegs2xkypfpync8mn2sa5cmpqjlvrhwz5nqgepyg8"
+
+
+class AddressESDT:
+    def __init__(self, address, esdtsum):
+        self.address = address
+        self.esdtsum = esdtsum
+
+    def __str__(self):
+        return self.address + "-" + str(self.esdtsum)
 
 
 def get_addresses_for_distro(args: Any) -> str:
@@ -49,6 +59,7 @@ def get_addresses_for_distro(args: Any) -> str:
 
     addresses_return_to_sh = ""
     unique_addresses_list = []
+    unique_addresses_list_esdt = []
     count = 0
     for value in values:
         address = value["address"]
@@ -66,15 +77,37 @@ def get_addresses_for_distro(args: Any) -> str:
     doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_name))
     # TODO: add ability to add your website stuff below
     # with doc.head:
-        # link(rel='stylesheet', href='/style.css')
-        # script(type='text/javascript', src='/script.js')
+    # link(rel='stylesheet', href='/style.css')
+    # script(type='text/javascript', src='/script.js')
     # TODO: add your website stuff and important links here
     # with doc:
-        # with div(id='header').add(ol()):
-            # for i in ['link-1', 'link-2', 'link-3']:
-                # li(a(i.title(), href='/%s.html' % i))
+    # with div(id='header').add(ol()):
+    # for i in ['link-1', 'link-2', 'link-3']:
+    # li(a(i.title(), href='/%s.html' % i))
     token_total = int(args["token_total"])
     token_per_address = int(token_total / count)
+    token_dec = int(args["token_decimals"])
+    per_wallet = int(token_per_address * (10 ** token_dec))
+
+    # new optimized writing
+
+    for value in values:
+        address = value["address"]
+        if address not in black_listed_addresses:
+            found = next((x for x in unique_addresses_list_esdt if x.address == address), None)
+            if found is None:
+                unique_addresses_list_esdt.append(AddressESDT(address, per_wallet))
+            else:
+                found.esdtsum = found.esdtsum + per_wallet
+
+    with open(f"output/{nft_collection_name}-esdt-per-address.csv", "wt") as fp:
+        writer = csv.writer(fp, delimiter=",")
+        writer.writerow(
+            ["Wallet address", "ESDT value per address", "Random value for bash correctness"])  # write header
+        for output in unique_addresses_list_esdt:
+            # adding random value as a last one, because of bash reading issues.
+            writer.writerow([output.address, hex(int(output.esdtsum)), "random"])
+
     with doc:
         h1('%s distribution for %s' % (token, nft_collection_name))
         h4('Total addresses: %s' % count)
@@ -92,8 +125,6 @@ def get_addresses_for_distro(args: Any) -> str:
 
     # calculating token amount to distribute to each wallet address
     token = hex_encode_string(token)
-    token_dec = int(args["token_decimals"])
-    per_wallet = int(token_per_address * (10 ** token_dec))
     quantity_in_hex = hex(per_wallet)
     # attaching to returned string as first argument
     addresses_return_to_sh = quantity_in_hex + " " + token + " " + addresses_return_to_sh
