@@ -13,6 +13,9 @@ import requests
 EMOON_ADDRESS = "erd1w9mmxz6533m7cf08gehs8phkun2x4e8689ecfk3makk3dgzsgurszhsxk4"
 DEAD_RARE_ADDRESS = "erd1qqqqqqqqqqqqqpgqd9rvv2n378e27jcts8vfwynpx0gfl5ufz6hqhfy0u0"
 TRUST_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq6wegs2xkypfpync8mn2sa5cmpqjlvrhwz5nqgepyg8"
+FRAMEIT_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq705fxpfrjne0tl3ece0rrspykq88mynn4kxs2cg43s"
+ELROND_NFT_SWAP_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq8xwzu82v8ex3h4ayl5lsvxqxnhecpwyvwe0sf2qj4e"
+ISENGARD_WALLET_ADDRESS="erd1qqqqqqqqqqqqqpgqy63d2wjymqergsxugu9p8tayp970gy6zlwfq8n6ruf"
 
 
 class AddressESDT:
@@ -47,6 +50,9 @@ def get_addresses_for_distro(args: Any) -> str:
     black_listed_addresses = [EMOON_ADDRESS,
                               DEAD_RARE_ADDRESS,
                               TRUST_WALLET_ADDRESS,
+                              FRAMEIT_WALLET_ADDRESS,
+                              ELROND_NFT_SWAP_WALLET_ADDRESS,
+                              ISENGARD_WALLET_ADDRESS,
                               args["owner_address"]]
     if sc_address != "null":
         black_listed_addresses.append(sc_address)
