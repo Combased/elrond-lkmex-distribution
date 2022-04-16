@@ -18,7 +18,7 @@ DAYS_OF_HOLDING_NFT=10
 # See https://docs.elrond.com/sdk-and-tools/erdpy/configuring-erdpy/
 # if proxy is mainnet, testnet or devnet, set proxy and chainId to different values
 if [ "$PROXY" = "mainnet" ]; then
-    PROXY_PREFIX=" "
+    PROXY_PREFIX="&"
     PROXY="https://gateway.elrond.com"
     CHAIN="1"
 elif [ "$PROXY" = "testnet" ]; then

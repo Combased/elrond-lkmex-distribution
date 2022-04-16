@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import time
 from datetime import date
 from pathlib import Path
 from typing import Any, List, Union
@@ -42,9 +43,24 @@ def get_addresses_for_distro(args: Any) -> str:
     token = args["token"]
     proxy_prefix = args["proxy_prefix"]
 
-    api_url = f"https://{proxy_prefix}api.elrond.com/nfts/{nft_collection_name}/owners/?size=10000"
-    r = requests.get(api_url)
-    values = r.json()
+    ## reproduce the response from the old elrond api point
+    all_collection_with_owner = []
+    i = 0
+    while i < 10000:
+        nfts = requests.get(f'https://{proxy_prefix}api.elrond.com/collections/{nft_collection_name}/nfts?from='+str(i)+'&size=100&withOwner=true').json()
+        for nft in nfts:
+            all_collection_with_owner.append(nft["owner"])
+        i = i + 100
+        time.sleep(0.1)
+
+    unique_holders = []
+    values = []
+    for holder in all_collection_with_owner:
+        if holder not in unique_holders:
+            unique_holders.append(holder)
+            balance = all_collection_with_owner.count(holder)
+            value = {"address": holder, "balance": balance}
+            values.append(value)
 
     # creating a black listed array so that these addresses won't get the token
     black_listed_addresses = [EMOON_ADDRESS,
