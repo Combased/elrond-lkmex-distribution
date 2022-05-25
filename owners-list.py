@@ -35,11 +35,13 @@ def get_duration_of_holding(args: Any):
     all_collection_with_owner = []
     i = 0
     while i < 10000:
-        nfts = requests.get(f'https://{proxy_prefix}api.elrond.com/collections/{nft_collection_name}/nfts?from='+str(i)+'&size=100&withOwner=true').json()
+        nfts = requests.get(f'https://{proxy_prefix}api.elrond.com/collections/{nft_collection_name}/nfts?from=' + str(
+            i) + '&size=100&withOwner=true').json()
         for nft in nfts:
-            all_collection_with_owner.append(nft["owner"])
+            if nft.get("owner") is not None:
+                all_collection_with_owner.append(nft["owner"])
         i = i + 100
-        time.sleep(0.1)
+        time.sleep(1.0)
 
     unique_holders = []
     values = []
@@ -88,16 +90,21 @@ def get_duration_of_holding(args: Any):
     p = Path('output')
     p.mkdir(parents=True, exist_ok=True)
     func_txt = open(name_of_file, "w")
+    which_one = 0
     for address in unique_addresses_list:
+        which_one = which_one + 1
         api_url = f"https://{proxy_prefix}api.elrond.com/accounts/{address}/nfts?size=10000&search={nft_collection_name}"
         r = requests.get(api_url)
         nfts = r.json()
         all_nfts = len(nfts)
         eligible_nfts = all_nfts
         # sleeping to not hit the API calls limits
-        time.sleep(0.3)
-        for nft in nfts:
+        if which_one % 5 == 0:
+            time.sleep(1.2)
+        else:
             time.sleep(0.3)
+        for nft in nfts:
+            time.sleep(1.1)
             nft_identifier = nft["identifier"]
             # checking if buy transactions occurred, cause airdrops don't appear on it
             transactions_with_nfts_url = f"https://api.elrond.com/transactions?status=success&token={nft_identifier}&after={timestamp}"

@@ -18,6 +18,8 @@ TOKEN_DECIMALS=18
 TOKEN_TOTAL=500000
 # Select `mainnet`, `testnet` or `devnet`
 PROXY="mainnet"
+# Specify the required holding NFT duration in days. If not, leave -1;
+DURATION_OF_HOLDING=-1
 #######################
 
 # See https://docs.elrond.com/sdk-and-tools/erdpy/configuring-erdpy/
@@ -38,7 +40,7 @@ fi
 
 OWNER_ADDRESS=$(erdpy wallet pem-address $OWNER_WALLET)
 set -ex
-DATA=$($PYTHON_BINARY ./prepare-args.py get-addresses $NFT_COLLECTION_IDENTIFIER $SMART_CONTRACT_ADDRESS $OWNER_ADDRESS $TOKEN_COLLECTION_IDENTIFIER $TOKEN_NONCE $TOKEN_DECIMALS $TOKEN_TOTAL $PROXY_PREFIX)
+DATA=$($PYTHON_BINARY ./prepare-args.py get-addresses $NFT_COLLECTION_IDENTIFIER $SMART_CONTRACT_ADDRESS $OWNER_ADDRESS $TOKEN_COLLECTION_IDENTIFIER $TOKEN_NONCE $TOKEN_DECIMALS $TOKEN_TOTAL $PROXY_PREFIX $DURATION_OF_HOLDING)
 set -f
 all_addresses=($(echo "$DATA" | tr ' ' '\n'))
 quantity_in_hex=${all_addresses[1]}

@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any, List, Union
 import dominate
 from dominate.tags import *
+import time
+from datetime import datetime, timedelta
 
 import requests
 
@@ -19,10 +21,22 @@ ELROND_NFT_SWAP_WALLET_ADDRESS = "erd1qqqqqqqqqqqqqpgq8xwzu82v8ex3h4ayl5lsvxqxnh
 ISENGARD_WALLET_ADDRESS="erd1qqqqqqqqqqqqqpgqy63d2wjymqergsxugu9p8tayp970gy6zlwfq8n6ruf"
 
 
+class AddressNftData:
+    def __init__(self, address, nfts_total, nfts_available):
+        self.address = address
+        self.nfts_total = nfts_total
+        self.nfts_available = nfts_available
+
+    def __str__(self):
+        return self.address + "-" + str(self.nfts_total) + "-" + str(self.nfts_available)
+
 class AddressESDT:
-    def __init__(self, address, esdtsum):
+    def __init__(self, address, esdtsum, nfts_total, nfts_available):
         self.address = address
         self.esdtsum = esdtsum
+        self.nfts_total = nfts_total
+        self.nfts_available = nfts_available
+
 
     def __str__(self):
         return self.address + "-" + str(self.esdtsum)
@@ -38,6 +52,12 @@ def get_addresses_for_distro(args: Any) -> str:
     p = Path('output')
     p.mkdir(parents=True, exist_ok=True)
 
+    days_of_holding = args["days_of_holding"]
+    current_date = datetime.now()
+    end_date = current_date + timedelta(days=-days_of_holding)
+    timestamp = end_date.timestamp()
+    timestamp = int(timestamp)
+
     nft_collection_name = args["collection"]
     sc_address = args["sc_address"]
     token = args["token"]
@@ -49,9 +69,10 @@ def get_addresses_for_distro(args: Any) -> str:
     while i < 10000:
         nfts = requests.get(f'https://{proxy_prefix}api.elrond.com/collections/{nft_collection_name}/nfts?from='+str(i)+'&size=100&withOwner=true').json()
         for nft in nfts:
-            all_collection_with_owner.append(nft["owner"])
+            if nft.get("owner") is not None:
+                all_collection_with_owner.append(nft["owner"])
         i = i + 100
-        time.sleep(0.1)
+        time.sleep(1.0)
 
     unique_holders = []
     values = []
@@ -95,41 +116,82 @@ def get_addresses_for_distro(args: Any) -> str:
             if address not in unique_addresses_list:
                 unique_addresses_list.append(address)
 
-    # forming HTML file
-    doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_name))
-    # TODO: add ability to add your website stuff below
-    # with doc.head:
-    # link(rel='stylesheet', href='/style.css')
-    # script(type='text/javascript', src='/script.js')
-    # TODO: add your website stuff and important links here
-    # with doc:
-    # with div(id='header').add(ol()):
-    # for i in ['link-1', 'link-2', 'link-3']:
-    # li(a(i.title(), href='/%s.html' % i))
-    token_total = int(args["token_total"])
-    token_per_address = int(token_total / count)
-    token_dec = int(args["token_decimals"])
-    per_wallet = int(token_per_address * (10 ** token_dec))
+    # checking if duration of holding is required
+    if days_of_holding != int(-1):
+        address_nft_data = []
 
-    # new optimized writing
-
-    for value in values:
-        address = value["address"]
-        if address not in black_listed_addresses:
-            found = next((x for x in unique_addresses_list_esdt if x.address == address), None)
-            if found is None:
-                unique_addresses_list_esdt.append(AddressESDT(address, per_wallet))
+        # unique_addresses_list = unique_addresses_list[0:5]
+        which_one = 0
+        for address in unique_addresses_list:
+            which_one = which_one + 1
+            api_url = f"https://{proxy_prefix}api.elrond.com/accounts/{address}/nfts?size=10000&search={nft_collection_name}"
+            r = requests.get(api_url)
+            nfts = r.json()
+            all_nfts = len(nfts)
+            eligible_nfts = all_nfts
+            # sleeping to not hit the API calls limits
+            if which_one % 5 == 0:
+                time.sleep(1.2)
             else:
-                found.esdtsum = found.esdtsum + per_wallet
+                time.sleep(0.3)
+            for nft in nfts:
+                time.sleep(1.1)
+                nft_identifier = nft["identifier"]
+                # checking if buy transactions occurred, cause airdrops don't appear on it
+                transactions_with_nfts_url = f"https://{proxy_prefix}api.elrond.com/transactions?status=success&token={nft_identifier}&after={timestamp}"
+                r = requests.get(transactions_with_nfts_url)
+                txs = r.json()
+                if len(txs) != 0:
+                    # found transactions, subtracting from eligible nfts
+                    eligible_nfts = eligible_nfts - 1
+
+            # creating an entry
+            address_nft_data_entry = AddressNftData(address, all_nfts, eligible_nfts)
+            print(address_nft_data_entry)
+            address_nft_data.append(address_nft_data_entry)
+
+        # sort nfts
+        address_nft_data = sorted(address_nft_data, key=lambda x: (x.nfts_available, x.nfts_total), reverse=True)
+        total_eligble = 0
+        for address in address_nft_data:
+            total_eligble = total_eligble + address.nfts_available
+
+        token_total = int(args["token_total"])
+        token_per_address = token_total / total_eligble
+        token_dec = int(args["token_decimals"])
+        per_wallet = int(token_per_address * (10 ** token_dec))
+
+        for address in address_nft_data:
+            if address.nfts_available!=0:
+                found = next((x for x in unique_addresses_list_esdt if x.address == address.address), None)
+                if found is None:
+                    appendedsum = address.nfts_available * per_wallet
+                    unique_addresses_list_esdt.append(AddressESDT(address.address, appendedsum, address.nfts_total, address.nfts_available))
+    else:
+        # sort nfts
+
+        token_total = int(args["token_total"])
+        token_per_address = token_total / count
+        token_dec = int(args["token_decimals"])
+        per_wallet = int(token_per_address * (10 ** token_dec))
+        for value in values:
+            address = value["address"]
+            if address not in black_listed_addresses:
+                found = next((x for x in unique_addresses_list_esdt if x.address == address), None)
+                if found is None:
+                    unique_addresses_list_esdt.append(AddressESDT(address, per_wallet))
+                else:
+                    found.esdtsum = found.esdtsum + per_wallet
 
     with open(f"output/{nft_collection_name}-esdt-per-address.csv", "wt") as fp:
         writer = csv.writer(fp, delimiter=",")
         writer.writerow(
-            ["Wallet address", "ESDT value per address", "Random value for bash correctness"])  # write header
+            ["Wallet address", "ESDT value per address", "Random value for bash correctness", "Total NFTs count", "Eligible NFTs count"])  # write header
         for output in unique_addresses_list_esdt:
             # adding random value as a last one, because of bash reading issues.
-            writer.writerow([output.address, hex(int(output.esdtsum)), "random"])
-
+            writer.writerow([output.address, hex(int(output.esdtsum)), "random", output.nfts_total, output.nfts_available])
+    # forming HTML file
+    doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_name))
     with doc:
         h1('%s distribution for %s' % (token, nft_collection_name))
         h4('Total addresses: %s' % count)
@@ -227,6 +289,7 @@ parser.add_argument("token_nonce", type=str, help="Token nonce identifier")
 parser.add_argument("token_decimals", type=str, help="Token decimals")
 parser.add_argument('token_total', type=str, help='Total token value in decimal, natural numbers only')
 parser.add_argument('proxy_prefix', type=str, help='Proxy prefix for urls')
+parser.add_argument('days_of_holding', type=str, help='Duration holding nfts')
 cli_args = parser.parse_args()
 tx_args = {"collection": cli_args.collection,
            "sc_address": cli_args.sc_address,
@@ -235,5 +298,6 @@ tx_args = {"collection": cli_args.collection,
            "token_nonce": cli_args.token_nonce,
            "token_decimals": cli_args.token_decimals,
            "token_total": cli_args.token_total,
-           "proxy_prefix": cli_args.proxy_prefix.replace("&", "")}
+           "proxy_prefix": cli_args.proxy_prefix.replace("&", ""),
+           "days_of_holding": int(cli_args.days_of_holding)}
 tx_data = prepare_args(tx_args)
