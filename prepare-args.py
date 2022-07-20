@@ -41,7 +41,11 @@ class AddressESDT:
     def __str__(self):
         return self.address + "-" + str(self.esdtsum)
 
-
+def find_first_in_list(objects, **kwargs):
+    return next((obj for obj in objects if
+                 len(set(obj.keys()).intersection(kwargs.keys())) > 0 and
+                 all([obj[k] == v for k, v in kwargs.items() if k in obj.keys()])),
+                None)
 def get_addresses_for_distro(args: Any) -> str:
     '''
     Gets addresses to send tokens to.
@@ -136,14 +140,33 @@ def get_addresses_for_distro(args: Any) -> str:
                 time.sleep(0.3)
             for nft in nfts:
                 time.sleep(1.1)
-                nft_identifier = nft["identifier"]
+                try:
+                    nft_identifier = nft["identifier"]
                 # checking if buy transactions occurred, cause airdrops don't appear on it
-                transactions_with_nfts_url = f"https://{proxy_prefix}api.elrond.com/transactions?status=success&token={nft_identifier}&after={timestamp}"
-                r = requests.get(transactions_with_nfts_url)
-                txs = r.json()
-                if len(txs) != 0:
+                    transactions_with_nfts_url = f"https://{proxy_prefix}api.elrond.com/transactions?status=success&token={nft_identifier}&after={timestamp}"
+                    r = requests.get(transactions_with_nfts_url)
+                    txs = r.json()
+                    if len(txs) != 0:
                     # found transactions, subtracting from eligible nfts
-                    eligible_nfts = eligible_nfts - 1
+                        eligible_nfts = eligible_nfts - 1
+
+                    # checking if the NFT has required attributes to be eligible
+                    filter_trait_type = args["filter_trait_type"]
+                    filter_trait_value = args["filter_trait_value"]
+                    if filter_trait_type != "-1" and filter_trait_value != "-1":
+                        time.sleep(1.0)
+                        transactions_with_nfts_url = f"https://api.elrond.com/nfts/{nft_identifier}"
+                        r = requests.get(transactions_with_nfts_url)
+                        txs = r.json()
+                        if "metadata" in txs:
+                            attributes_array = txs["metadata"]["attributes"]
+                            found = find_first_in_list(attributes_array, trait_type="Background", value="Castle")
+                            if found is None:
+                                eligible_nfts = eligible_nfts - 1
+                except Exception:
+                    print("error in checking NFTs attributes")
+
+
 
             # creating an entry
             address_nft_data_entry = AddressNftData(address, all_nfts, eligible_nfts)
@@ -189,7 +212,12 @@ def get_addresses_for_distro(args: Any) -> str:
             ["Wallet address", "ESDT value per address", "Random value for bash correctness", "Total NFTs count", "Eligible NFTs count"])  # write header
         for output in unique_addresses_list_esdt:
             # adding random value as a last one, because of bash reading issues.
-            writer.writerow([output.address, hex(int(output.esdtsum)), "random", output.nfts_total, output.nfts_available])
+
+            if token == "EGLD":
+                # no need hex encode
+                writer.writerow([output.address, int(output.esdtsum), "random", output.nfts_total, output.nfts_available])
+            else:
+                writer.writerow([output.address, hex(int(output.esdtsum)), "random", output.nfts_total, output.nfts_available])
     # forming HTML file
     doc = dominate.document(title='%s distribution for %s' % (token, nft_collection_name))
     with doc:
@@ -290,6 +318,8 @@ parser.add_argument("token_decimals", type=str, help="Token decimals")
 parser.add_argument('token_total', type=str, help='Total token value in decimal, natural numbers only')
 parser.add_argument('proxy_prefix', type=str, help='Proxy prefix for urls')
 parser.add_argument('days_of_holding', type=str, help='Duration holding nfts')
+parser.add_argument("filter_trait_type", type=str, help="Used together with filter_trait_value")
+parser.add_argument("filter_trait_value", type=str, help="Only NFTs with this trait value will be eligible for ESDT drop")
 cli_args = parser.parse_args()
 tx_args = {"collection": cli_args.collection,
            "sc_address": cli_args.sc_address,
@@ -299,5 +329,7 @@ tx_args = {"collection": cli_args.collection,
            "token_decimals": cli_args.token_decimals,
            "token_total": cli_args.token_total,
            "proxy_prefix": cli_args.proxy_prefix.replace("&", ""),
-           "days_of_holding": int(cli_args.days_of_holding)}
+           "days_of_holding": int(cli_args.days_of_holding),
+           "filter_trait_type": cli_args.filter_trait_type,
+          "filter_trait_value":cli_args.filter_trait_value }
 tx_data = prepare_args(tx_args)

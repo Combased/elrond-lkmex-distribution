@@ -132,4 +132,5 @@ dmypy.json
 
 # Project specific
 wallet.pem
+wallet-dev.pem
 /output
