@@ -66,6 +66,7 @@ def get_addresses_for_distro(args: Any) -> str:
     sc_address = args["sc_address"]
     token = args["token"]
     proxy_prefix = args["proxy_prefix"]
+    owner_address = args["owner_address"]
 
     ## reproduce the response from the old elrond api point
     all_collection_with_owner = []
@@ -93,10 +94,12 @@ def get_addresses_for_distro(args: Any) -> str:
                               TRUST_WALLET_ADDRESS,
                               FRAMEIT_WALLET_ADDRESS,
                               ELROND_NFT_SWAP_WALLET_ADDRESS,
-                              ISENGARD_WALLET_ADDRESS,
-                              args["owner_address"]]
+                              ISENGARD_WALLET_ADDRESS]
     if sc_address != "null":
         black_listed_addresses.append(sc_address)
+
+    if owner_address != "null":
+        black_listed_addresses.append(owner_address)
 
     today = date.today()
     html_file = today.strftime("%b-%d-%Y.html")
@@ -197,14 +200,35 @@ def get_addresses_for_distro(args: Any) -> str:
         token_per_address = token_total / count
         token_dec = int(args["token_decimals"])
         per_wallet = int(token_per_address * (10 ** token_dec))
-        for value in values:
-            address = value["address"]
-            if address not in black_listed_addresses:
-                found = next((x for x in unique_addresses_list_esdt if x.address == address), None)
+
+        address_nft_data = []
+        for address in unique_addresses_list:
+            api_url = f"https://{proxy_prefix}api.elrond.com/accounts/{address}/nfts?size=10000&search={nft_collection_name}"
+            r = requests.get(api_url)
+            nfts = r.json()
+            all_nfts = len(nfts)
+            eligible_nfts = all_nfts
+            address_nft_data_entry = AddressNftData(address, all_nfts, eligible_nfts)
+            print(address_nft_data_entry)
+            address_nft_data.append(address_nft_data_entry)
+        # sort nfts
+        address_nft_data = sorted(address_nft_data, key=lambda x: (x.nfts_available, x.nfts_total), reverse=True)
+        total_eligble = 0
+        for address in address_nft_data:
+            total_eligble = total_eligble + address.nfts_available
+
+        token_total = int(args["token_total"])
+        token_per_address = token_total / total_eligble
+        token_dec = int(args["token_decimals"])
+        per_wallet = int(token_per_address * (10 ** token_dec))
+
+        for address in address_nft_data:
+            if address.nfts_available != 0:
+                found = next((x for x in unique_addresses_list_esdt if x.address == address.address), None)
                 if found is None:
-                    unique_addresses_list_esdt.append(AddressESDT(address, per_wallet))
-                else:
-                    found.esdtsum = found.esdtsum + per_wallet
+                    appendedsum = address.nfts_available * per_wallet
+                    unique_addresses_list_esdt.append(
+                        AddressESDT(address.address, appendedsum, address.nfts_total, address.nfts_available))
 
     with open(f"output/{nft_collection_name}-esdt-per-address.csv", "wt") as fp:
         writer = csv.writer(fp, delimiter=",")
